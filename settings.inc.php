@@ -7,8 +7,9 @@ $ui['logo']=$ui['name_simple'].'.png';
 $ui['title']=$ui['name'];
 $ui['site_title']=str_replace('⚙-','<span class="title_cog">⚙</span>-',$ui['name']).'<span class="dotcom">.com</span>';
 $ui['donate']='mailto:yo@joeltron.com?subject=I want to give you money';
-$ui['source']='/?source';
-$ui['foot']='&copy;'.date('Y').'&nbsp;<a href="mailto:yo@joeltron.com?subject='.$ui['name'].' sucks">joeltron dot com</a><span class="right">'.lang('Always').' <a href="'.$ui['source'].'" target="_BLANK">'.lang('open').'</a> &amp; <a href="'.$ui['donate'].'">'.lang('free').'</a> &lt;3</span>';
+//$ui['source']='/?source';
+$ui['source']='https://github.com/joeltrondotcom/claveomatic';
+$ui['foot']='&copy;'.date('Y').'&nbsp;<a href="mailto:yo@joeltron.com?subject='.$ui['name'].' sucks">joeltron dot com</a><span class="right"><a href="'.$ui['source'].'" target="_BLANK">'.lang('open sorce').'</a> &amp; <a href="'.$ui['donate'].'">'.lang('free').'&nbsp;&lt;3</a></span>';
 $ui['about']='What is <b>'.$ui['name'].'</b>?<ul>
 	<li>Digital autoclave log recording</li>
 	<li>Designed for the body art industry</li>
