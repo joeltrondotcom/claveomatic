@@ -548,6 +548,9 @@ table.logs tbody input {
 	font-size: 0.8em;
 /*	margin-top: 1em;*/
 }
+.table .cycle label {
+	width: 4em;
+}
 .table label {
 	width: 3em;
 }
@@ -805,7 +808,7 @@ float: left;
 width: 50%;
 }
 .settings_refresh,
-.settings_magic { 
+.settings_automatic { 
 float: left;
 width: 10em;
 margin-right: 3em;
@@ -853,7 +856,7 @@ margin-right: 3em;
 	margin-bottom: 0.1em;
 }
 .settings_account th,
-.settings_magic th {
+.settings_automatic th {
 	text-align: right;
 	padding: 0em 1em;
 	padding-top: 0px;
@@ -862,7 +865,7 @@ margin-right: 3em;
 .setting .logout {
 	font-size: 0.8em;
 }
-.settings_magic td {
+.settings_automatic td {
 	padding-left: 1em;
 	padding-top: 0.3em;
 	text-align: left !important;

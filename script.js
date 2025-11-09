@@ -245,9 +245,12 @@ function download_logs(el) {
 
 function datetime(input) { 
 	//datepicker
+	console.log('datetime');
 	$(input).datetimepicker({
-		timepicker:false,
-		format:'Y-m-d',
+		step:5,
+		dateFormat: "yy-mm-dd",
+		timeFormat:  "hh:mm",
+		theme:'dark',
 		theme:'dark',
 	});
 }
@@ -577,7 +580,7 @@ function display_log_cycle(el) {
 		// enable inputs
 		$(tr).find(".cycle :input").attr("disabled", false);
 
-		// allow magic and load cycle types
+		// allow automatic and load cycle types
 		$.get("?cycle_types="+$(el).val(), function(ret) {
 			var data = jQuery.parseJSON(ret);
 			$(data).each(function() {
@@ -586,6 +589,7 @@ function display_log_cycle(el) {
 					.attr("data-name", this["cycle_name"])
 					.attr("data-temp", this["cycle_temp"])
 					.attr("data-time", this["cycle_time"])
+					.attr("data-pressure", this["cycle_pressure"])
 					.text(this["cycle_name"]);
 				$(cycle_type).find('.cycles').append(option);
 			});
@@ -674,7 +678,7 @@ function remove_logs_image(el) {
 	});
 }
 
-function magic_log_cycle(el) {
+function automatic_log_cycle(el) {
 	// row
 	row = $(el).closest('tr');
 
@@ -684,7 +688,7 @@ function magic_log_cycle(el) {
 
 	// get last cycle
 	$.ajax({
-		url: "?magic_log",
+		url: "?automatic_log",
 		type: 'POST',
 		data: {
 			'autoclave': val,

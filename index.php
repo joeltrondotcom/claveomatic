@@ -1,5 +1,5 @@
 <?php
-$nerd="oh hi
+$nerd="
   ▗▄▄▖▗▖    ▗▄▖ ▗▖  ▗▖▗▄▄▄▖       ▗▄▖       ▗▖  ▗▖ ▗▄▖▗▄▄▄▖▗▄▄▄▖ ▗▄▄▖
  ▐▌   ▐▌   ▐▌ ▐▌▐▌  ▐▌▐▌         ▐▌ ▐▌      ▐▛▚▞▜▌▐▌ ▐▌ █    █  ▐▌   
  ▐▌   ▐▌   ▐▛▀▜▌▐▌  ▐▌▐▛▀▀▘  ▀▀▘ ▐▌ ▐▌  ▀▀▘ ▐▌  ▐▌▐▛▀▜▌ █    █  ▐▌   
@@ -128,8 +128,8 @@ if($logged_in) {
 		die(remove_image($link, $settings, $_POST['id'], $_POST['image']));
 
 	// last log
-	if(isset($_GET['magic_log']) && isset($_POST['autoclave']))
-		die(magic_log($link, $settings, $_POST['autoclave']));
+	if(isset($_GET['automatic_log']) && isset($_POST['autoclave']))
+		die(automatic_log($link, $settings, $_POST['autoclave']));
 
 	// add operators
 	if(isset($_GET['add_operators']))

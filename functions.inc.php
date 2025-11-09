@@ -81,11 +81,11 @@ function starts_with($haystack, $needle) {
 	return false;
 }
 
-function magic_latest_log($link, $settings, $autoclave=false) {
+function automatic_latest_log($link, $settings, $autoclave=false) {
 	// grab latest
 	$q="SELECT `enabled`";	
 
-	$pre_key="magic_autoclave_";
+	$pre_key="automatic_autoclave_";
 	foreach($settings as $key=>$value) {
 		if(starts_with($key, $pre_key)) {
 			$name=str_replace($pre_key,'',$key);
@@ -112,8 +112,8 @@ function magic_latest_log($link, $settings, $autoclave=false) {
 	return $row;
 }
 
-function magic_log($link, $settings, $autoclave) {
-	$row=magic_latest_log($link, $settings, $autoclave);
+function automatic_log($link, $settings, $autoclave) {
+	$row=automatic_latest_log($link, $settings, $autoclave);
 	// jsonify it
 	echo json_encode($row);
 }
@@ -184,14 +184,14 @@ function display_settings($link, $settings, $autoclaves, $operators, $models, $l
 </div>
 
 
-<!-- Magic -->
-<div class="setting settings_magic">
-	<h3><?=lang('Magic Fill')?> <?=icon('magic')?></h3>
-	<div class="settings_help"><?=lang($settings['help_magic_fill'])?></div>
+<!-- automatic -->
+<div class="setting settings_automatic">
+	<h3><?=lang('Automatic Fill')?> <?=icon('automatic')?></h3>
+	<div class="settings_help"><?=lang($settings['help_automatic_fill'])?></div>
 	<table class="table auto">
 		<tbody>
 <?php
-	$pre_key="magic_autoclave_";
+	$pre_key="automatic_autoclave_";
 	foreach($settings as $key=>$value) {
 		if(starts_with($key, $pre_key)) {
 			// name
@@ -208,10 +208,6 @@ function display_settings($link, $settings, $autoclaves, $operators, $models, $l
 		}
 	}
 ?>
-		<!--<tr>
-			<th><?=lang("Status")?></th>
-			<td><?=array_to_dropdown(array_merge(array('Copy'),$settings['statuses']), 'magic_status_default', $settings['magic_status_default'], "save_setting('magic_status_default',$(this).val());");?></td>
-		</tr>-->
 		</tbody>
 	</table>
 </div>
@@ -679,7 +675,7 @@ function edit_autoclave_cycle($cycle=array()) {
 		<?=confirm_delete('remove_autoclaves_cycles(this);');?>
 		<table>
 <?php
-	foreach(array('name','temp','time') as $e) {
+	foreach(array('name','temp','time','pressure') as $e) {
 ?>
 			<tr>
 				<td class="label"><?=lang(ucwords($e))?></td>
@@ -1493,6 +1489,8 @@ function display_log($link, $log, $autoclaves=array(), $operators=array(), $sett
 		echo '<li>'.$log['cycle_temp'].'°c</li>';
 	if($log['cycle_duration'])
 		echo '<li>'.$log['cycle_duration'].'&nbsp;'.lang('mins').'</li>';
+	if($log['cycle_pressure'])
+		echo '<li>'.$log['cycle_pressure'].'&nbsp;'.lang('PSI').'</li>';
 	echo '</ul>';
 	echo '</td>';
 
@@ -1661,7 +1659,7 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 		foreach($autoclaves as $a)
 			$autoclave_list[$a['id']]=(strlen($a['nickname'])?$a['nickname']:str_repeat("&nbsp;",18)."-");
 
-		echo array_to_dropdown($autoclave_list, 'autoclave', $log['autoclave'], "save_log(this); display_log_cycle(this); magic_log_cycle(this);");
+		echo array_to_dropdown($autoclave_list, 'autoclave', $log['autoclave'], "save_log(this); display_log_cycle(this); automatic_log_cycle(this);");
 		echo '</td>';
 	}
 ?>
@@ -1710,6 +1708,7 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 
 			<label for=""><?=lang("Temp")?></label><input<?=$disabled?' disabled="disabled"':''?> type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_temp" value="<?=$log['cycle_temp']?>">
 			<label for=""><?=lang("Time")?></label><input<?=$disabled?' disabled="disabled"':''?>  type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_duration" value="<?=$log['cycle_duration']?>">
+			<label for=""><?=lang("Pressure")?></label><input<?=$disabled?' disabled="disabled"':''?>  type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_pressure" value="<?=$log['cycle_pressure']?>">
 		</div>
 	</td>
 <?php
@@ -1739,7 +1738,7 @@ function add_log($link, $settings, $time=null, $autoclaves=array(), $operators=a
 
 	// get last log
 	if(!count($autoclaves))
-		$add_log=magic_latest_log($link, $settings);
+		$add_log=automatic_latest_log($link, $settings);
 
 	// insert new log
 	$q="INSERT into `logs` SET `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."'"; //, `photo_id` = UUID_SHORT()";
@@ -1825,7 +1824,7 @@ function icon($name, $text=null, $only_icon=false) {
 	case 'move': $icon="↕"; break;
 	case 'test': $icon="⌖"; break;
 	case 'load': $icon="🔗"; break;
-	case 'magic': $icon="🪄"; break;
+	case 'automatic': $icon="🪄"; break;
 	case 'donate': $icon="💸" ; break;
 	case 'random': $icon="🎲"; break;
 	case 'download': $icon="💾"; break;
