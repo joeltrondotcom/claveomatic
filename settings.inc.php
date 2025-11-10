@@ -46,14 +46,18 @@ $settings=array(
 		9000000	=>	'15 min refresh',
 		false	=>	'Do not refresh',
 	),
+
+	/* automation */
 	'automatic_autoclave_cycle_no'		=> true,
-	'automatic_autoclave_cycle_type'	=> true,
+	'automatic_autoclave_cycle_name'	=> true,
 	'automatic_autoclave_cycle_temp'	=> true,
-	'automatic_autoclave_cycle_duration'	=> true,
+	'automatic_autoclave_cycle_time'	=> true,
 	'automatic_autoclave_cycle_pressure'	=> true,
 	'automatic_autoclave_operator'		=> true,
 	'automatic_autoclave_status'		=> true,
-	'automatic_autoclave_desc'			=> false,
+	'automatic_autoclave_verification'	=> true,
+	'automatic_autoclave_contents'		=> false,
+
 	'pagination_per_page'			=> 10,
 	'help_no_logs'				=> '<b>'.lang("Nothing to see here...").'</b><br /><br />'.lang("Hit the big ol' orange").' <span onclick="add_log();">'.icon('add').'</span> '.lang("to create a log"),
 	'help_no_results'			=> lang("No results"),
@@ -65,9 +69,10 @@ $settings=array(
 	<table><th class="status_passed"></th><td>'.lang("Status: Passed").'</td></th></table>
 	<table><th class="status_failed"></th><td>'.lang("Status: Failed").'</td></th></table>
 	</div>',
-'help_autoclaves'			=> 'Your autoclaves',
+	'help_autoclaves'			=> 'Your autoclaves',
 	'help_automatic_fill'			=> 'What options to auto fill when adding a new cycle, based on the last cycle.',
 	'help_operators'			=> 'The names of your technitians.',
+	'help_verification'			=> 'Autoclave testing strips.',
 	'help_refresh'				=> 'How often to refresh the logs. (Refreshing is paused while adding/editing a log)',
 	'help_autoclaves'			=> 'Add and modify your models of autoclaves.',
 	'help_account'				=> 'Change your account details',
@@ -79,11 +84,22 @@ $settings=array(
 						),
 	'download_default_format'		=> 'CSV',
 	'download_fileprefix'			=> $ui['name_simple'],
+	'operators'				=> array(),
 	'statuses'				=> array(
 							'Running',
 							'Passed',
 							'Failed',
 	),
+	'log_verification'			=> array(
+							'Class 6',
+							'Class 5',
+							'Indicator',
+						),
+	'log_cycle_symbols'			=> array(
+							'temp'=>lang('°c'),
+							'time'=>lang('mins'),
+							'pressure'=>lang('psi'),
+						),
 	'pdf_photos_per_row'			=> 3,
 	'pdf_photos_max_rows'			=> 1,
 	'pdf_photos_max_width'			=> '22em',

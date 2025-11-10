@@ -81,7 +81,7 @@ function starts_with($haystack, $needle) {
 	return false;
 }
 
-function automatic_latest_log($link, $settings, $autoclave=false) {
+function automatic_latest_log($link, $settings, $autoclave=false, $not_this=false) {
 	// grab latest
 	$q="SELECT `enabled`";	
 
@@ -98,7 +98,10 @@ function automatic_latest_log($link, $settings, $autoclave=false) {
 	$q.=" from `logs` WHERE `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."'";
 	if($autoclave!=false)
 		$q.=" AND `autoclave` = '".mysqli_real_escape_string($link, $autoclave)."'";
-	$q.=" AND `enabled` = '1' AND `cycle_no` > 0 ORDER BY `id` DESC LIMIT 1";
+	$q.=" AND `enabled` = '1' AND `cycle_no` > 0";
+	if($not_this!=false)
+		$q.=" AND `id` != '".mysqli_real_escape_string($link, $not_this)."'";
+	$q.=" ORDER BY `id` DESC LIMIT 1";
 
 	$res=mysqli_query($link, $q);
 	$row=mysqli_fetch_assoc($res);
@@ -112,8 +115,8 @@ function automatic_latest_log($link, $settings, $autoclave=false) {
 	return $row;
 }
 
-function automatic_log($link, $settings, $autoclave) {
-	$row=automatic_latest_log($link, $settings, $autoclave);
+function automatic_log($link, $settings, $autoclave, $not_this=false) {
+	$row=automatic_latest_log($link, $settings, $autoclave, $not_this);
 	// jsonify it
 	echo json_encode($row);
 }
@@ -137,23 +140,23 @@ function settings_checkbox($id, $checked=false) {
 	return $string;
 }
 
-function display_settings($link, $settings, $autoclaves, $operators, $models, $languages) {
+function display_settings($link, $settings, $autoclaves, $models, $languages) {
 ?>
 
 <!-- Operators -->
 <div class="setting settings_operators">
 	<h3><?=lang('Operators')?></h3>
 	<div class="settings_help"><?=lang($settings['help_operators'])?></div>
-	<table class="table operators">
+	<table class="table strings">
 		<thead>
-			<th class="add" onclick="add_operators();"><?=icon('add')?></th>
+			<th class="add" onclick="add_string(this);"><?=icon('add')?></th>
 			<th><?=lang('Name')?></th>
 			<th></th>
 		</thead>
-		<tbody><?php
-	foreach($operators as $o) {
+		<tbody data-id="operators"><?php
+	foreach($settings['operators'] as $o) {
 		echo '<tr>';
-		display_operator($o);
+		display_string('operators', $o);
 		echo '</tr>';
 	}
 ?>
@@ -184,7 +187,51 @@ function display_settings($link, $settings, $autoclaves, $operators, $models, $l
 </div>
 
 
-<!-- automatic -->
+<!-- Verification -->
+<div class="setting settings_verification">
+	<h3><?=lang('Sterilisation Verification')?></h3>
+	<div class="settings_help"><?=lang($settings['help_verification'])?></div>
+	<table class="table strings">
+		<thead>
+			<th class="add" onclick="add_string(this);"><?=icon('add')?></th>
+			<th><?=lang('Name')?></th>
+			<th></th>
+		</thead>
+		<tbody data-id="log_verification"><?php
+	foreach($settings['log_verification'] as $o) {
+		echo '<tr>';
+		display_string('log_verification', $o);
+		echo '</tr>';
+	}
+?>
+		</tbody>
+	</table>
+</div>
+
+
+<!-- Statuses -->
+<div class="setting settings_statuses">
+	<h3><?=lang('Sterilisation Statuses')?></h3>
+	<div class="settings_help"><?=lang($settings['help_statuses'])?></div>
+	<table class="table strings">
+		<thead>
+			<th class="add" onclick="add_string(this);"><?=icon('add')?></th>
+			<th><?=lang('Name')?></th>
+			<th></th>
+		</thead>
+		<tbody data-id="statuses"><?php
+	foreach($settings['statuses'] as $o) {
+		echo '<tr>';
+		display_string('statuses', $o);
+		echo '</tr>';
+	}
+?>
+		</tbody>
+	</table>
+</div>
+
+
+<!-- Automatic stuff -->
 <div class="setting settings_automatic">
 	<h3><?=lang('Automatic Fill')?> <?=icon('automatic')?></h3>
 	<div class="settings_help"><?=lang($settings['help_automatic_fill'])?></div>
@@ -197,7 +244,6 @@ function display_settings($link, $settings, $autoclaves, $operators, $models, $l
 			// name
 			$name=str_replace($pre_key,'',$key);
 			$name=ucwords(str_replace('_',' ',$name));
-			if($name=="Desc")	$name="Description";
 			$name=lang($name);
 
 			// setting
@@ -490,7 +536,7 @@ padding: 0;
 border: 0;	
 }
 table .odd td {
-	background: #eee;
+background: #eee;
 }
 img {
 max-width: '.$settings['pdf_photos_max_width'].';
@@ -548,7 +594,7 @@ max-height: '.$settings['pdf_photos_max_height'].';
 		$logs_count++;
 	}
 	$html.='</tbody></table>';
-//	echo $html; die;
+	//	echo $html; die;
 
 	// render and output
 	$dompdf->loadHtml($html);
@@ -562,20 +608,20 @@ function get_setting($settings, $key) {
 	return false;
 }
 
-function display_operator($o=false) {
+function display_string($key, $o=false) {
 ?>
 	<td class="edits">
 		<div class="handle"><?=icon('move')?></div>
 		<div class="blank"><?=icon('blank')?></div>
-		<div class="edit" onclick="edit_operators(this);"><?=icon('edit')?></div>
-		<div class="save" onclick="done_operators(this);"><?=icon('done')?></div>
+		<div class="edit" onclick="edit_string(this);"><?=icon('edit')?></div>
+		<div class="save" onclick="done_string(this);"><?=icon('done')?></div>
 </td>
 <td>
-<input onchange="save_operators(this);" <?=$o!==false?'value="'.$o.'" disabled="disabled"':''?>  placeholder="-">
+<input onchange="save_strings(this);" <?=$o!==false?'value="'.$o.'" disabled="disabled"':''?>  placeholder="-">
 
 </td>
 <td class="actions">
-		<?=confirm_delete('delete_operators(this);')?>
+		<?=confirm_delete('delete_string(this);')?>
 </td>
 
 <?php
@@ -952,6 +998,12 @@ function debug($in) {
 }
 
 function load_settings($link, $settings) {
+	$should_be_array=array(
+		'operators',
+		'statuses',
+		'log_verification',
+	);
+
 	$id=isset($_SESSION['id'])?$_SESSION['id']:false;
 
 	$q="SELECT `key`, `value` from `settings` WHERE `owner` = '".mysqli_real_escape_string($link, $id)."'";
@@ -964,7 +1016,13 @@ function load_settings($link, $settings) {
 				$value=false;
 			if($value=="true")
 				$value=true;
+			if(in_array($row['key'], $should_be_array))
+				if(strlen($value))
+					$value=explode(PHP_EOL,$value);
+				else
+					$value=array();
 
+			// set value
 			$settings[$row['key']] = $value;
 		}
 	return $settings;
@@ -986,23 +1044,6 @@ function get_unlisted_operators($link, $operators) {
 	// find unique
 	$unlisted_operators=array_diff($unlisted_operators, $operators);
 	return $unlisted_operators;
-}
-
-
-
-function get_operators($link) {
-	$operators=array();
-
-	// query
-	$q="SELECT `operators` from `users` WHERE `id` = '".mysqli_real_escape_string($link, $_SESSION['id'])."' LIMIT 1";
-	$res=mysqli_query($link, $q);
-	echo mysqli_error($link);
-	if(mysqli_num_rows($res)>0) {
-		$row=mysqli_fetch_assoc($res);
-		if(strlen($row['operators']))
-			$operators=explode(PHP_EOL,$row['operators']);
-	}
-	return $operators;
 }
 
 function get_autoclave($link, $id) {
@@ -1106,7 +1147,7 @@ function get_logs($link, $pageNumber=null, $pageSize=null, $search=array(), $ord
 
 			// value
 			switch($k) {
-			case "desc":
+			case "contents":
 				$q.=" LIKE '%".$v."%'";
 				break;
 			case "cycle_from":
@@ -1223,7 +1264,7 @@ function autoclave_names_from_list($autoclaves, $prefix='&nbsp;(',$postfix=')') 
 	return $autoclave_names;
 }
 
-function display_logs($link, $logs, $settings, $autoclaves=array(), $operators=array()) {
+function display_logs($link, $logs, $settings, $autoclaves=array()) {
 
 	// datetime
 	$search['datetime']='<input data-name="date_from" class="date" placeholder="'.lang('From').'" /><span class="divider">-</span><input data-name="date_to" class="date" placeholder="'.lang("To").'" />';
@@ -1237,23 +1278,25 @@ function display_logs($link, $logs, $settings, $autoclaves=array(), $operators=a
 	$search['cycle']='<input data-name="cycle_from" class="cycle_no" placeholder="'.lang('From').'" /><span class="divider">-</span><input data-name="cycle_to" class="cycle_no" placeholder="'.lang("To").'" />';
 
 	// operators
-	$operators_names=$operators;
-	foreach($operators_names as $id=>$name)
-		if(!strlen($name))
-			$operators_names[$id]=str_repeat("&nbsp;",14).'-';
-	$operators_names['-']='-';		// empty
+	if(isset($settings['operators'])) {
+		$operators_names=$settings['operators'];
+		foreach($operators_names as $id=>$name)
+			if(!strlen($name))
+				$operators_names[$id]=str_repeat("&nbsp;",14).'-';
+		$operators_names['-']='-';		// empty
 
-	$unlisted_operators=get_unlisted_operators($link, $operators);
-	if(count($unlisted_operators))
-		$operators_names['Removed']=$unlisted_operators;
+		$unlisted_operators=get_unlisted_operators($link, $settings['operators']);
+		if(count($unlisted_operators))
+			$operators_names['Removed']=$unlisted_operators;
 
-	$search['operators']=array_to_dropdown($operators_names, 'operator');
+		$search['operators']=array_to_dropdown($operators_names, 'operator');
+	}
 
 	// status
 	$search['status']=array_to_dropdown(array_merge($settings['statuses'],array('-'=>'-')), 'status');
 
-	// description
-	$search['desc']='<input data-name="desc" />';
+	// contentsription
+	$search['contents']='<input data-name="contents" />';
 
 	// photos
 	$search['photos']=array_to_dropdown(
@@ -1276,7 +1319,7 @@ function display_logs($link, $logs, $settings, $autoclaves=array(), $operators=a
 	<table class="table logs" id="logs">
 		<thead>
 			<tr class="search">
-				<th class="add" rowspan="2">'.icon('lizard').'</th>
+				<th class="add" rowspan="2">'.icon('add').'</th>
 				<th>'.$search['datetime'].'</th>';
 
 	if(count($autoclaves))
@@ -1284,15 +1327,15 @@ function display_logs($link, $logs, $settings, $autoclaves=array(), $operators=a
 
 	echo '			<th>'.$search['cycle'].'</th>';
 
-	if(count($operators))
+	if(count($settings['operators']))
 		echo '		<th>'.$search['operators'].'</th>';
 
 	echo '			<th>'.$search['status'].'</th>
-				<th>'.$search['desc'].'</th>
+				<th>'.$search['contents'].'</th>
 				<th class="photos">'.$search['photos'].'</th>';
 
 	echo '		</tr>
-			<tr>
+			<tr class="headers">
 				<th>'.lang('Date Time').'</th>';
 
 	if(count($autoclaves))
@@ -1300,32 +1343,20 @@ function display_logs($link, $logs, $settings, $autoclaves=array(), $operators=a
 
 	echo '			<th>'.lang('Cycle').'</th>';
 
-	if(count($operators))
+	if(count($settings['operators']))
 		echo '<th>'.lang('Operator').'</th>';
 
 	echo '			<th>'.lang('Status').'</th>
-				<th>'.lang('Description').'</th>
+				<th>'.lang('Contents').'</th>
 				<th class="photos">'.lang('Photos').'</th>';
 	echo '		</tr>
 		</thead>
 		<tbody id="logs_content">';
 	echo '</tbody>';
-/*	echo '<tfoot>
-		<tr>
-		<th class="refresh">'.icon('refresh').'</th>
-		<th>'.lang('datetime').'</th>
-		<th>'.lang('autoclave').'</th>
-		<th>'.lang('cycle').'</th>
-		<th>'.lang('operator').'</th>
-		<th>'.lang('status').'</th>
-		<th>'.lang('description').'</th>
-		<th>'.lang('photos').'</th>
-		</tr>
-</tfoot>';*/
 	echo '</table>';
 }
 
-function json_logs_content($link, $settings, $autoclaves=array(), $operators=array(), $pageNumber=0, $pageSize=20, $search=array()) {
+function json_logs_content($link, $settings, $autoclaves=array(), $pageNumber=0, $pageSize=20, $search=array()) {
 	header('Content-Type: application/json; charset=utf-8');
 	$logs=get_logs($link, $pageNumber, $pageSize, $search);
 
@@ -1333,16 +1364,13 @@ function json_logs_content($link, $settings, $autoclaves=array(), $operators=arr
 	foreach($logs as $log) {
 		// display log and put it into ajax
 		ob_start();
-		display_log_content($link, $log, $settings, $autoclaves, $operators);
+		display_log_content($link, $log, $settings, $autoclaves);
 		$html=ob_get_contents();
 		array_push($logs_array, $html);
 		ob_end_clean();
 	}
 
-	// help notes
-	//	if(!count($autoclaves))
-	//		array_push($logs_array, '<td colspan="8" class="no_logs">'.$settings['help_no_autoclaves'].'</td>');
-	//else
+	// no content, show message
 	if(!count($logs_array)) {
 		if(count($search))
 			array_push($logs_array, '<td colspan="8" class="no_logs">'.$settings['help_no_results'].'</td>');
@@ -1353,7 +1381,7 @@ function json_logs_content($link, $settings, $autoclaves=array(), $operators=arr
 	echo json_encode($logs_array);
 }
 
-function display_log_content($link, $log, $settings, $autoclaves=array(), $operators=array()) {
+function display_log_content($link, $log, $settings, $autoclaves=array()) {
 	$class='';
 
 	// autoclave
@@ -1362,9 +1390,9 @@ function display_log_content($link, $log, $settings, $autoclaves=array(), $opera
 
 	// cycle
 	if(!$log['cycle_no'] ||
-		!$log['cycle_type'] || 
+		!$log['cycle_name'] || 
 		!$log['cycle_temp'] || 
-		!$log['cycle_duration']
+		!$log['cycle_time']
 	)
 	$class.=' no_cycle';
 
@@ -1382,9 +1410,9 @@ function display_log_content($link, $log, $settings, $autoclaves=array(), $opera
 	else
 		$class.=' no_status';
 
-	// desc
-	if(!$log['desc'])
-		$class.=' no_desc';
+	// contents
+	if(!$log['contents'])
+		$class.=' no_contents';
 
 	// photos
 	$thumb_folder=$settings['log_photo_folder'].$log['photo_id'].'/'.$settings['log_photo_thumb_prefix'];
@@ -1398,7 +1426,7 @@ function display_log_content($link, $log, $settings, $autoclaves=array(), $opera
 
 	// show row
 	echo '<tr data-id="'.$log['id'].'"'.(strlen($class)?' class="'.trim($class).'"':'').'>';
-	display_log($link, $log, $autoclaves, $operators, $settings);
+	display_log($link, $log, $autoclaves, $settings);
 	echo '</tr>';
 }
 
@@ -1431,7 +1459,7 @@ function time_elapsed_string($diff) {
 	return $string ? implode(', ', $string) . ' '.lang('ago') : lang('just now');
 }
 
-function display_log($link, $log, $autoclaves=array(), $operators=array(), $settings) {
+function display_log($link, $log, $autoclaves=array(), $settings) {
 	echo '<td class="edit" onclick="edit_log(this);">'.icon('edit').'</td>';
 
 	echo '<td class="time">';
@@ -1483,18 +1511,19 @@ function display_log($link, $log, $autoclaves=array(), $operators=array(), $sett
 	else
 		echo '-';
 	echo '<ul>';
-	if($log['cycle_type'])
-		echo '<li>'.$log['cycle_type'].'</li>';
-	if($log['cycle_temp'])
-		echo '<li>'.$log['cycle_temp'].'°c</li>';
-	if($log['cycle_duration'])
-		echo '<li>'.$log['cycle_duration'].'&nbsp;'.lang('mins').'</li>';
-	if($log['cycle_pressure'])
-		echo '<li>'.$log['cycle_pressure'].'&nbsp;'.lang('PSI').'</li>';
+
+	foreach(array('name', 'temp', 'time', 'pressure') as $i) {
+		if($log['cycle_'.$i]) {
+			echo '<li>'.$log['cycle_'.$i];
+			if(isset($settings['log_cycle_symbols'][$i]))
+				echo '<span class="symbol">'.$settings['log_cycle_symbols'][$i].'<span>';
+			echo '</li>';
+		}
+	}
 	echo '</ul>';
 	echo '</td>';
 
-	if(count($operators))
+	if(count($settings['operators']))
 		echo '<td class="operator">'.($log['operator']?$log['operator']:'-').'</td>';
 
 	echo '<td class="status">';
@@ -1507,7 +1536,12 @@ function display_log($link, $log, $autoclaves=array(), $operators=array(), $sett
 		echo '<span class="reason">'.$log['reason'].'</span>';
 	echo '</td>';
 
-	echo '<td class="desc">'.$log['desc'].'</td>';
+	echo '<td class="contents">';
+	echo $log['contents'];
+	if($log['verification'])
+		echo '<span class="verification">'.$log['verification'].'</span>';
+	echo '</td>';
+
 	echo '<td class="photos">';
 	display_log_photos($log['photo_id'], '<b>'.$log['autoclave'].'</b>'.($log['cycle_no']?' ('.lang("Cycle")." #".$log['cycle_no'].')':''));
 	echo '</td>';
@@ -1540,6 +1574,14 @@ function save_setting($link, $key, $value) {
 	// no key, gone gittttt
 	if(!strlen($key))	return false;
 
+	// array of values
+	if(is_array($value)) {
+		$new_value="";
+		foreach($value as $v)
+			$new_value.=$v.PHP_EOL;
+		$value=trim($new_value);
+	}
+
 	// first remove
 	$q="DELETE from `settings` WHERE `key` = '".mysqli_real_escape_string($link, $key)."' AND `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."' LIMIT 1";
 	$res=mysqli_query($link, $q);
@@ -1569,14 +1611,29 @@ function save_autoclaves($link, $id, $key, $value) {
 }
 
 function save_log($link, $id, $key, $value) {
+	// sanitise to array
+	if(!is_array($key))	$key=array($key);
+	if(!is_array($value))	$value=array($value);
 
-	// null then overwrite
-	if(strlen($value) || $value>0)
-		$value="'".mysqli_real_escape_string($link, $value)."'";
-	else
-		$value="NULL";
+	// null
+	if($value<=0)	$value="NULL";
 
-	$q="UPDATE `logs` SET `".mysqli_real_escape_string($link, $key)."` = ".$value." WHERE `id` = '".mysqli_real_escape_string($link, $id)."' AND `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."' LIMIT 1";
+	$q="UPDATE `logs` SET ";
+	for($x=0; $x<count($key); $x++) {
+		$q.="`".mysqli_real_escape_string($link, $key[$x])."`";
+		$q.=" = ";
+		if(isset($value[$x]) && strlen($value[$x]))
+			$q.="'".mysqli_real_escape_string($link, $value[$x])."'";
+		else
+			$q.="NULL";
+		if($x<(count($key)-1))
+			$q.=",";
+		$q.=" ";
+	}
+
+	$q.="WHERE `id` = '".mysqli_real_escape_string($link, $id)."' AND `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."' LIMIT 1";
+
+	//echo $q; die;
 
 	$res=mysqli_query($link, $q);
 	if(mysqli_affected_rows($link)>0)
@@ -1603,20 +1660,20 @@ function delete_log($link, $id) {
 	 */
 }
 
-function get_cycle_types($link, $autoclave) {
-	$cycle_types=array(
+function get_cycle_names($link, $autoclave) {
+	$cycle_names=array(
 		'woo',
 		'uh hmn',
 		'yasss',
 	);
 
-	return $cycle_types;
+	return $cycle_names;
 
 }
 
 function display_autoclave_types($link, $autoclave, $val=false) { 
-	$cycle_types=get_cycle_types($link, $autoclave);
-	echo array_to_dropdown($cycle_types, 'cycle_type', $val, "save_log(this);");
+	$cycle_names=get_cycle_names($link, $autoclave);
+	echo array_to_dropdown($cycle_names, 'cycle_name', $val, "save_log(this);");
 }
 
 function confirm_delete($onclick="return false;") {
@@ -1634,7 +1691,7 @@ function confirm_delete($onclick="return false;") {
 <?php
 }
 
-function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings) {
+function edit_log($link, $id, $autoclaves=array(), $settings) {
 	// save some time
 	$numbersonly='onkeyup="this.value = this.value.replace(/[^0-9\.]/g,\'\');"';
 
@@ -1674,11 +1731,11 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 			<label for="">#</label><input<?=$disabled?' disabled="disabled"':''?> type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_no" value="<?=$log['cycle_no']?>">
 
 			<label for=""><?=lang("Name")?></label>
-			<div class="cycle_type">
+			<div class="cycle_name">
 <?php
 	if(count($autoclaves)) {
 		$found=false;
-		echo '<select'.($disabled?' disabled="disabled"':'').' data-name="cycle_type" onchange="save_log(this); display_log_cycle_info(this);">';
+		echo '<select'.($disabled?' disabled="disabled"':'').' data-name="cycle_name" onchange="save_log(this); display_log_cycle_info(this);">';
 		echo '<option></option>';
 
 		echo '<optgroup class="cycles" label="'.lang('Cycles').'">';
@@ -1686,9 +1743,9 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 		if(isset($log['autoclave']) && isset($autoclaves[$log['autoclave']]))
 			foreach($autoclaves[$log['autoclave']]['cycles'] as $cycle) {
 				$found_this=false;
-				if($cycle['cycle_name']==$log['cycle_type'])
+				if($cycle['cycle_name']==$log['cycle_name'])
 					$found=$found_this=true;
-				echo '<option data-name="'.$cycle['cycle_name'].'" data-temp="'.$cycle['cycle_temp'].'" data-time="'.$cycle['cycle_time'].'"'.($found_this?' selected="selected"':'').'>'.$cycle['cycle_name'].'</option>';
+				echo '<option data-name="'.$cycle['cycle_name'].'" data-temp="'.$cycle['cycle_temp'].'" data-time="'.$cycle['cycle_time'].'" data-pressure="'.$cycle['cycle_pressure'].'"'.($found_this?' selected="selected"':'').'>'.$cycle['cycle_name'].'</option>';
 			}
 		echo '</optgroup>';
 		//	}
@@ -1696,34 +1753,44 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 		// custom cycles
 		echo '<optgroup class="custom" label="'.lang('Custom').'">';
 		echo '<option value="enter_other">'.lang("Enter other").'</option>';
-		if(!$found && strlen($log['cycle_type']))
-			echo '<option data-name="'.$log['cycle_type'].'" selected="selected">'.$log['cycle_type'].'</option>';
+		if(!$found && strlen($log['cycle_name']))
+			echo '<option data-name="'.$log['cycle_name'].'" selected="selected">'.$log['cycle_name'].'</option>';
 		echo '</optgroup>';
 		echo '</select>';
 	} else
-		echo '<input data-name="cycle_type" onchange="save_log(this);" value="'.$log['cycle_type'].'" />';
+		echo '<input data-name="cycle_name" onchange="save_log(this);" value="'.$log['cycle_name'].'" />';
 
 ?>
 			</div>
 
 			<label for=""><?=lang("Temp")?></label><input<?=$disabled?' disabled="disabled"':''?> type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_temp" value="<?=$log['cycle_temp']?>">
-			<label for=""><?=lang("Time")?></label><input<?=$disabled?' disabled="disabled"':''?>  type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_duration" value="<?=$log['cycle_duration']?>">
+			<label for=""><?=lang("Time")?></label><input<?=$disabled?' disabled="disabled"':''?>  type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_time" value="<?=$log['cycle_time']?>">
 			<label for=""><?=lang("Pressure")?></label><input<?=$disabled?' disabled="disabled"':''?>  type="number" <?=$numbersonly?> onchange="save_log(this);" data-name="cycle_pressure" value="<?=$log['cycle_pressure']?>">
 		</div>
 	</td>
 <?php
-	if(count($operators)) {
+	if(count($settings['operators'])) {
 		echo '<td>';
-		echo array_to_dropdown($operators, 'operator', $log['operator'], "save_log(this);");
+		echo array_to_dropdown($settings['operators'], 'operator', $log['operator'], "save_log(this);");
 		echo '</td>';
 	}
 ?>
 	<td>
 		<?=array_to_dropdown($settings['statuses'], 'status', $log['status'], "save_log(this);")?>
-		<label><?=lang("Note")?></label>
+		<label><?=lang("Note")?></label>	<!-- Reason -->
 		<input class="reason" onchange="save_log(this);" data-name="reason" value="<?=$log['reason']?>">
+
 	</td>
-	<td><input onchange="save_log(this);" data-name="desc" value="<?=$log['desc']?>"></td>
+	<td class="contents">
+		<input onchange="save_log(this);" data-name="contents" value="<?=$log['contents']?>">
+<?php
+	if(count($settings['log_verification'])) {
+		echo '<label>'.lang('Verify').'</label>';
+		echo array_to_dropdown($settings['log_verification'], 'verification', $log['verification'], "save_log(this);");
+	}
+
+?>
+	</td>
 	<td class="photos">
 		<div class="add" onclick="save_log_add_photo(this);"><?=icon('add')?></div>
 <?php
@@ -1733,7 +1800,7 @@ function edit_log($link, $id, $autoclaves=array(), $operators=array(), $settings
 <?php
 }
 
-function add_log($link, $settings, $time=null, $autoclaves=array(), $operators=array()) {
+function add_log($link, $settings, $time=null, $autoclaves=array()) {
 	$add_log=array();
 
 	// get last log
@@ -1758,7 +1825,7 @@ function add_log($link, $settings, $time=null, $autoclaves=array(), $operators=a
 
 	// show editable row
 	echo '<tr class="editing new_log" data-id="'.$last_id.'">';
-	edit_log($link, $last_id, $autoclaves, $operators, $settings['statuses']);
+	edit_log($link, $last_id, $autoclaves, $settings);
 	echo '</tr>';
 ?>
 	<script language="javascript">

@@ -395,18 +395,22 @@ table.logs .cycle input:disabled {
 table.logs li {
 	display: inline;
 }
+table.logs .verification,
 table.logs .reason,
 table.logs .model {
+	padding-top: 0.2em;
 	display: block;
 }
 table.logs .reason,
 table.logs .model,
+table.logs .verification,
 table.logs .cycle li,
 table.logs .removed {
 	color: #AAA;
 }
 table.logs .reason,
 table.logs .model,
+table.logs .verification,
 table.logs .cycle li {
 	margin: 0em 0.75em;
 	font-size: 0.8em;
@@ -517,8 +521,13 @@ table.logs tbody input {
 .table.auto td,
 .table > thead > tr > th:first-child,
 .table > tbody > tr > td:first-child {
-	border-top: 2px solid #000;
 	border-left: 2px solid #000;
+}
+.table.logs .search th:not(.add) {
+	border-bottom: 2px solid #111;
+}
+.table > thead > tr  {
+	border-bottom: 2px solid #000;
 }
 .table td.view,
 .table td.edit {
@@ -544,20 +553,35 @@ table.logs tbody input {
 	cursor: pointer;
 	color: #aa7e62;
 }
+.table.logs .icon_done {
+	font-size: 3.5em;
+}
+.table.logs .view .confirmation {
+	margin-top: 1.5em;
+}
 .table .delete {
 	font-size: 0.8em;
 /*	margin-top: 1em;*/
 }
+.table .cycle .symbol {
+	color: #888;
+	padding-left: 0.25em;
+}
 .table .cycle label {
-	width: 4em;
+	width: 5em;
 }
 .table label {
 	width: 3em;
 }
 .table input.reason,
 .table .cycle select,
-.table .cycle input {
+.table .cycle select,
+.table .cycle input,
+.table .contents select {
 	width: 8em;
+}
+.table.logs .editing .contents {
+	text-align: left;
 }
 .table .nickname {
 	width: 10em;
@@ -598,7 +622,7 @@ table.logs tr.no_cycle td.cycle,
 table.logs tr.no_operator td.operator,
 table.logs tr.no_desc td.desc,
 table.logs tr.no_status td.status,
-table.logs tr.no_photos td.photos {
+table.logs tr.no_photos.not(.editing) td.photos {
 	background: #5e4701 !important;
 }
 .help_colours th.no_content,
@@ -802,17 +826,6 @@ img.log_image {
 	padding-bottom: 0.25em;
 	padding: 0em 0em 0.5em 0.5em;
 }
-/*.settings_operators,
-.settings_operators {
-float: left;
-width: 50%;
-}
-.settings_refresh,
-.settings_automatic { 
-float: left;
-width: 10em;
-margin-right: 3em;
-}*/
 .setting td.editing .icon_edit,
 .setting td.editing .fake_password {
 	display: none;
@@ -876,13 +889,15 @@ margin-right: 3em;
 
 .settings_autoclaves tr .label,
 .settings_autoclaves tr .cycle_temp,
-.settings_autoclaves tr .cycle_time {
+.settings_autoclaves tr .cycle_time,
+.settings_autoclaves tr .cycle_pressure {
 	display: none;
 }
 
 .settings_autoclaves tr.editing .label,
 .settings_autoclaves tr.editing .cycle_temp,
-.settings_autoclaves tr.editing .cycle_time {
+.settings_autoclaves tr.editing .cycle_time,
+.settings_autoclaves tr.editing .cycle_pressure {
 	display: inline-block;
 }
 .popup_content > div:not(:last-of-type) {
@@ -890,8 +905,8 @@ margin-right: 3em;
 	padding-bottom: 1.25em;
 	border-bottom: 2px solid #b37b5e;
 }
-.popup_content .table.operators td:nth-last-of-type(2),
-.popup_content .table.operators th:nth-last-of-type(2) {
+.popup_content .table.strings td:nth-last-of-type(2),
+.popup_content .table.strings th:nth-last-of-type(2) {
 	border-right: none !important;
 }
 .autoclaves {
@@ -1009,7 +1024,7 @@ table.logs .editing .logs_image .confirmation {
 .table .editing .edits .remove,
 .table .editing .cycles .remove_autoclaves_cycles,
 .table .editing .add_autoclaves_cycles,
-.table.operators .editing .actions .delete,
+.table.strings .editing .actions .delete,
 .table .editing .ip_address .actions {
 	display: inline-block;
 }
@@ -1022,7 +1037,7 @@ table.logs .editing .logs_image .confirmation {
 .table .edits .remove,
 .table .cycles .remove_autoclaves_cycles,
 .table .add_autoclaves_cycles,
-.table.operators .actions .delete,
+.table.strings .actions .delete,
 .table .ip_address .actions {
 	display: none;
 }
@@ -1032,7 +1047,7 @@ table.logs .editing .logs_image .confirmation {
 .autoclaves input {
 	max-width: auto;
 }
-.operators .edits {
+.strings .edits {
 	font-size: 0.75em;
 }
 .editing {
@@ -1040,6 +1055,9 @@ table.logs .editing .logs_image .confirmation {
 }
 .editing.new_log {
 	border: 3px solid #bf7759;
+}
+table.logs {
+	width: 100%;
 }
 .logs .editing td {
 	background: #111 !important;

@@ -2,10 +2,9 @@
 $sql_details = array(
 	"type" => "Mysql",
 
-	// ispconfig
-	'user' => 'c0claveomatic',
-	'pass' => 'ydW!XTviP4z',
-	'db'   => 'c0claveomatic',
+	'user' => 'claveomatic',
+	'pass' => 'supersecretbusiness',
+	'db'   => 'claveomatic',
 
 	'host' => 'localhost',
 	'port' => '',

@@ -211,7 +211,7 @@ $(function() {
 function edit_account(el) {
 	// grab cell
 	td=$(el).closest('td');
-	
+
 	// enable editing
 	$(td).addClass('editing');
 	$(td).find('input, select').attr("disabled", false);
@@ -245,7 +245,6 @@ function download_logs(el) {
 
 function datetime(input) { 
 	//datepicker
-	console.log('datetime');
 	$(input).datetimepicker({
 		step:5,
 		dateFormat: "yy-mm-dd",
@@ -277,6 +276,7 @@ function display_autoclaves_cycles(el) {
 				cycle.find('input[data-name="cycle_name"]').val(this["name"]);
 				cycle.find('input[data-name="cycle_temp"]').val(this["temp"]);
 				cycle.find('input[data-name="cycle_time"]').val(this["time"]);
+				cycle.find('input[data-name="cycle_pressure"]').val(this["pressure"]);
 			});
 
 			// save it up!
@@ -447,7 +447,6 @@ function change_user(input, id) {
 			'value': val,
 		},
 	}).done(function(ret) {
-		console.log(ret);
 		// blink
 		if(ret=="saved")
 			$(input).addClass('saved');
@@ -509,8 +508,6 @@ function change_password(el) {
 				'change': password_change.val(),
 			},
 		}).done(function(ret) {
-			console.log(ret);
-			console.log('changing pw');
 			// blink
 			if(ret=="saved") {
 				// show saved
@@ -543,45 +540,59 @@ function change_password(el) {
 /* logs */
 function display_log_cycle_info(el) {
 	tr = $(el).closest('tr');
+	id = $(tr).data("id");
+
+	// data
+	name = $(el).find(':selected').val();
 	temp = $(el).find(':selected').data('temp');
 	time = $(el).find(':selected').data('time');
+	pressure = $(el).find(':selected').data('pressure');
 
+	// inputs
 	temp_input = $(tr).find('input[data-name="cycle_temp"]');
-	time_input = $(tr).find('input[data-name="cycle_duration"]');
+	time_input = $(tr).find('input[data-name="cycle_time"]');
+	pressure_input = $(tr).find('input[data-name="cycle_pressure"]');
 
-	if(!$(temp_input).val()) {
-		temp_input.val(temp);
-		temp_input.change();
-	}
+	// set values
+	temp_input.val(temp);
+	time_input.val(time);
+	pressure_input.val(pressure);
 
-	if(!$(time_input).val()) {
-		time_input.val(time);
-		time_input.change();
-	}
+	// save values
+	$.ajax({
+		url: "?save",
+		type: 'POST',
+		data: {
+			'id': id,
+			'key': ['cycle_name', 'cycle_temp', 'cycle_time', 'cycle_pressure'],
+			'value': [name, temp, time, pressure],
+		},
+	})
+
 }
 
 function display_log_cycle(el) {
 	tr = $(el).closest('tr');
-	cycle_type = $(tr).find('.cycle_type select');
-	prev_value=$(cycle_type).val();
+	cycle_name = $(tr).find('.cycle_name select');
+	prev_value=$(cycle_name).val();
 
 	if($(el).val()=="") {
 		// disable inputs
 		$(tr).find(".cycle :input").attr("disabled", true);
 	} else {
 		// empty cycle dropdown
-		$(cycle_type).find('.cycles').empty();
+		$(cycle_name).find('.cycles').empty();
 
 		// empty custom dropdown
-		$(cycle_type).find('.custom').empty();
+		$(cycle_name).find('.custom').empty();
 		var option = $('<option value="enter_other">Enter other</option>');
-		$(cycle_type).find('.custom').append(option);
+		$(cycle_name).find('.custom').append(option);
 
 		// enable inputs
 		$(tr).find(".cycle :input").attr("disabled", false);
 
 		// allow automatic and load cycle types
-		$.get("?cycle_types="+$(el).val(), function(ret) {
+		$.get("?cycle_names="+$(el).val(), function(ret) {
 			var data = jQuery.parseJSON(ret);
 			$(data).each(function() {
 				var option = $('<option></option>')
@@ -591,18 +602,18 @@ function display_log_cycle(el) {
 					.attr("data-time", this["cycle_time"])
 					.attr("data-pressure", this["cycle_pressure"])
 					.text(this["cycle_name"]);
-				$(cycle_type).find('.cycles').append(option);
+				$(cycle_name).find('.cycles').append(option);
 			});
 		});
 
 		// is it missing from list?
-		if(prev_value && !$(cycle_type).find('option[value="'+prev_value+'"]').length) {
+		if(prev_value && !$(cycle_name).find('option[value="'+prev_value+'"]').length) {
 			var option = $('<option></option>')
 				.attr("value", prev_value)
 				.attr("data-name", prev_value)
 				.text(prev_value);
-			$(cycle_type).find('.custom').append(option);
-			$(cycle_type).val(prev_value);
+			$(cycle_name).find('.custom').append(option);
+			$(cycle_name).val(prev_value);
 		}
 
 	}
@@ -680,29 +691,37 @@ function remove_logs_image(el) {
 
 function automatic_log_cycle(el) {
 	// row
-	row = $(el).closest('tr');
+	tr = $(el).closest('tr');
+	id = $(tr).data("id");
 
 	// autoclave
-	val = $(row).find('[data-name="autoclave"]').val();
+	val = $(tr).find('[data-name="autoclave"]').val();
 	if(val=="") return false;
 
 	// get last cycle
 	$.ajax({
 		url: "?automatic_log",
 		type: 'POST',
+		async: false,
+		cache: false,
 		data: {
 			'autoclave': val,
+			'not_this': id,
 		},
 	}).done(function(ret, log) {
 		var obj = jQuery.parseJSON(ret);
 
-		if(obj)
+		if(obj) {
+			var keys = new Array();
+			var values = new Array();
+
+			//each input
 			$.each(obj, function(key,value) {
 				// input
-				input = $(row).find('[data-name="'+key+'"]');
+				input = $(tr).find('[data-name="'+key+'"]');
 
 				// make sure its in the list
-				if(key=="cycle_type" && $(input).is("select") && value) {
+				if(key=="cycle_name" && $(input).is("select") && value) {
 					if(!$(input).find('[data-name="'+value+'"]').length) {
 						markup='<option data-name="'+value+'">'+value+'</option>';
 						$(input).find('.custom').prepend(markup);
@@ -710,11 +729,24 @@ function automatic_log_cycle(el) {
 				}
 
 				// set the value
-				if($(input).length) {
+			//	if($(input).length) {
 					$(input).val(value);
-					$(input).change();
-				}
+					keys.push(key);
+					values.push(value);
+			//	}
 			}); 
+
+			// save values
+			$.ajax({
+				url: "?save",
+				type: 'POST',
+				data: {
+					'id': id,
+					'key': keys,
+					'value': values,
+				},
+			})
+		}
 	});
 }
 
@@ -729,7 +761,6 @@ function view_log(log, fade=true) {
 	id=tr.data("id");
 
 	$.get("?view_log="+id, function(data) {
-		console.log(id);
 		tr.removeClass('editing');
 
 		if(fade)
@@ -746,7 +777,6 @@ function edit_log(el, close_others=true) {
 	// stop editing others
 	if(close_others)
 		$('.logs tbody .editing').each(function() {
-			console.log("test");
 			view_log($(this), false);
 		});
 
@@ -1084,53 +1114,60 @@ function view_operators(e) {
 	$(e).parent().parent().load("?view_operators="+$(e).parent().parent().data("id"));
 }
 
-function delete_operators(el) {
+function delete_string(el) {
 	// remove
+	table=$(el).closest('table.strings');
+
 	$(el).closest('tr').fadeOut( function() {
 		$(this).remove();
-		save_operators(el);
+		save_strings($(table));
 	});
 }
 
-function done_operators(el) {
+function done_string(el) {
 	$(el).closest('tr').find('input').prop('disabled', true);
 	$(el).closest('tr').removeClass('editing');
-	save_operators();
 }
 
-function save_operators() {
-	// set up refreh on popup close
-	forceRefresh = true;
+function save_strings(el) {
+	// key
+	key = $(el).closest('table.strings').find('tbody').data('id');
 
-	// create operators string
-	var operators='';
-	var count=0;
-	$('.operators').find('input').each(function() {
-		if(count) operators+="\n";
-		operators+=$(this).val();
-		count++;
+	// values array
+	var val = new Array();
+	$(el).closest('table.strings').find('input').each(function() {
+		val.push($(this).val());
 	});
+	if(!val.length)
+		val='';
+
+	console.log("SAVING");
+	console.log(key);
+	console.log(val);
 
 	// save
 	$.ajax({
-		url: "?save_operators",
+		url: "?save_setting",
 		type: 'POST',
 		data: {
-			'operators': operators,
+			key: key,
+			value: val,
 		},
 	});
+	
+	// refresh
+	forceRefresh = true;
 }
 
-function edit_operators(el) {
-	$(el).closest('.operators').find('tr.editing').removeClass('editing');
+function edit_string(el) {
+	$(el).closest('table').find('tr.editing').removeClass('editing');
 	edit_row(el);
 }
 
-function add_operators() {
+function add_string(el, key) {
 	// grab empty new line and add to bottom
-	$.get("?add_operators", function( markup ) {
-		$('table.operators tbody').append('<tr class="editing">'+markup+'</tr>');
-		save_operators();
+	$.get("?add_string&key="+key, function( markup ) {
+		$(el).closest('table').find('tbody').prepend('<tr class="editing">'+markup+'</tr>');
 	});
 }
 

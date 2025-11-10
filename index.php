@@ -17,8 +17,10 @@ $nerd="
 // general
  - statim IP look up new cycles
  - help page for port forwarding statims
+ - test all magic thingos
 
 // bugs
+- changing autoclave doesn't wipe/fix/update cycle info
 
 // known bugs (not going to fix)
  - Photo search returns true if all photos are deleted
@@ -70,7 +72,6 @@ if(isset($_GET['is_logged_in']))
 if($logged_in) {
 	// logged in
 	$autoclaves=get_autoclaves($link);
-	$operators=get_operators($link);
 
 	// download
 	if(isset($_GET['logs_download']))
@@ -84,8 +85,8 @@ if($logged_in) {
 		die(edit_autoclave_cycle());
 
 	// cycle types
-	if(isset($_GET['cycle_types']))
-		die(json_encode($autoclaves[$_GET['cycle_types']]['cycles']));
+	if(isset($_GET['cycle_names']))
+		die(json_encode($autoclaves[$_GET['cycle_names']]['cycles']));
 
 	// logs count
 	if(isset($_GET['logs_count']))
@@ -93,15 +94,15 @@ if($logged_in) {
 
 	// logs and logs count
 	if(isset($_GET['logs']) || isset($_GET['logs_count']))
-		die(json_logs_content($link, $settings, $autoclaves, $operators, (isset($_GET['pageNumber'])?$_GET['pageNumber']:null), (isset($_GET['pageSize'])?$_GET['pageSize']:null), (isset($_GET['search'])?$_GET['search']:array())));
+		die(json_logs_content($link, $settings, $autoclaves,(isset($_GET['pageNumber'])?$_GET['pageNumber']:null), (isset($_GET['pageSize'])?$_GET['pageSize']:null), (isset($_GET['search'])?$_GET['search']:array())));
 
 	// add log
 	if(isset($_GET['add_log'])) 
-		die(add_log($link, $settings, (isset($_GET['time'])?$_GET['time']:null),$autoclaves, $operators));
+		die(add_log($link, $settings, (isset($_GET['time'])?$_GET['time']:null),$autoclaves));
 
 	// edit log
 	if(isset($_GET['edit_log'])) 
-		die(edit_log($link, $_GET['edit_log'], $autoclaves, $operators, $settings));
+		die(edit_log($link, $_GET['edit_log'], $autoclaves, $settings));
 
 	// random name
 	if(isset($_GET['random_name']))
@@ -109,7 +110,7 @@ if($logged_in) {
 
 	// view log
 	if(isset($_GET['view_log'])) 
-		die(display_log_content($link, get_log($link, $_GET['view_log']), $settings, $autoclaves, $operators));
+		die(display_log_content($link, get_log($link, $_GET['view_log']), $settings, $autoclaves));
 
 	// save log
 	if(isset($_GET['save']) && isset($_POST['id']) && isset($_POST['value'])) 
@@ -129,15 +130,11 @@ if($logged_in) {
 
 	// last log
 	if(isset($_GET['automatic_log']) && isset($_POST['autoclave']))
-		die(automatic_log($link, $settings, $_POST['autoclave']));
+		die(automatic_log($link, $settings, $_POST['autoclave'], isset($_POST['not_this'])?$_POST['not_this']:false));
 
-	// add operators
-	if(isset($_GET['add_operators']))
-		die(display_operator());
-
-	// save operators
-	if(isset($_GET['save_operators']) && isset($_POST['operators']))
-		die(change_user($link, 'operators', $_POST['operators']));
+	// add strings
+	if(isset($_GET['add_string']) && isset($_GET['key']))
+		die(display_string($_GET['key']));
 
 	// add autoclave
 	if(isset($_GET['add_autoclaves']))
@@ -177,7 +174,7 @@ if($logged_in) {
 
 	// settings
 	if(isset($_GET['settings'])) 
-		die(display_settings($link, $settings, $autoclaves, $operators, $models, $languages));
+		die(display_settings($link, $settings, $autoclaves, $models, $languages));
 
 	// change password
 	if(isset($_GET['change_password']) && isset($_GET['password'])) 
@@ -211,7 +208,7 @@ if($logged_in) {
 
 	// show stuff
 	$ui['page']='logs';
-	display_logs($link, $logs=array(), $settings, $autoclaves, $operators);
+	display_logs($link, $logs=array(), $settings, $autoclaves);
 	refresh_interval($settings);
 	download_link($settings);
 	$ui['page_bottom']=$settings['help_colours'];
