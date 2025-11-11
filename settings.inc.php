@@ -60,6 +60,8 @@ $settings=array(
 
 	'pagination_per_page'			=> 10,
 	'help_no_logs'				=> '<b>'.lang("Nothing to see here...").'</b><br /><br />'.lang("Hit the big ol' orange").' <span onclick="add_log();">'.icon('add').'</span> '.lang("to create a log"),
+	'help_contents'				=> 'Default contents for a cycle',
+	'help_statuses'				=> 'Statuses a cycle can be in',
 	'help_no_results'			=> lang("No results"),
 	'help_download'				=> lang("Create a a backup your autoclave results."),
 	'help_colours'				=> '
@@ -76,6 +78,30 @@ $settings=array(
 	'help_refresh'				=> 'How often to refresh the logs. (Refreshing is paused while adding/editing a log)',
 	'help_autoclaves'			=> 'Add and modify your models of autoclaves.',
 	'help_account'				=> 'Change your account details',
+	'help_pwa'				=> 'Create a shortcut on your device',
+	'help_pwa_instructions'			=> '
+<ul>
+	<li><b>Android:</b>
+		<ol>
+			<li>Tap the three vertical dots (menu icon) in the right corner</a>
+			<li>Select <i>Add to Home screen</i></li>
+			<li>Hit <i>Install</i></li>
+		</ol>
+	</li>
+	<li><b>iOS:</b>
+		<ol>
+			<li>Tap the Share button (a square with an arrow pointing up) at the bottom of the screen</li>
+			<li>Scroll down and select <i>Add to Home Screen</i></li>
+			<li>Tap <i>Add</i></li>
+		</ol>
+	</li>
+	<li><b>Desktop:</b>
+		<ol>
+			<li>Look for the install icon on the right side of the address bar. It may look like a computer screen with a downward arrow</li>
+			<li>Click the icon and then click <i>Install</i></li>
+		</ol>
+</ul>
+						',
 	'logs_download_link'			=> true,
 	'download_file_formats'			=> array(
 							'CSV'=>'CSV (Linked images)',
@@ -89,14 +115,25 @@ $settings=array(
 							'Running',
 							'Passed',
 							'Failed',
-	),
+						),
+	'log_contents'				=> array(
+							'Piercing',
+							'Change-over',
+							'Downsize',
+							'Tools',
+							'Jewellery',
+							'Gauze',
+							'Testing',
+							'Spore test',
+							'Helix test',
+						),
 	'log_verification'			=> array(
 							'Class 6',
 							'Class 5',
 							'Indicator',
 						),
 	'log_cycle_symbols'			=> array(
-							'temp'=>lang('°c'),
+							'temp'=>lang('&deg;c'),
 							'time'=>lang('mins'),
 							'pressure'=>lang('psi'),
 						),

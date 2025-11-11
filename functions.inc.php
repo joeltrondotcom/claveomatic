@@ -189,7 +189,7 @@ function display_settings($link, $settings, $autoclaves, $models, $languages) {
 
 <!-- Verification -->
 <div class="setting settings_verification">
-	<h3><?=lang('Sterilisation Verification')?></h3>
+	<h3><?=lang('Cycle Verification')?></h3>
 	<div class="settings_help"><?=lang($settings['help_verification'])?></div>
 	<table class="table strings">
 		<thead>
@@ -211,7 +211,7 @@ function display_settings($link, $settings, $autoclaves, $models, $languages) {
 
 <!-- Statuses -->
 <div class="setting settings_statuses">
-	<h3><?=lang('Sterilisation Statuses')?></h3>
+	<h3><?=lang('Cycle Statuses')?></h3>
 	<div class="settings_help"><?=lang($settings['help_statuses'])?></div>
 	<table class="table strings">
 		<thead>
@@ -229,6 +229,31 @@ function display_settings($link, $settings, $autoclaves, $models, $languages) {
 		</tbody>
 	</table>
 </div>
+
+
+<!-- Contents -->
+<div class="setting settings_contents">
+	<h3><?=lang('Cycle Contents')?></h3>
+	<div class="settings_help"><?=lang($settings['help_contents'])?></div>
+	<table class="table strings">
+		<thead>
+			<th class="add" onclick="add_string(this);"><?=icon('add')?></th>
+			<th><?=lang('Name')?></th>
+			<th></th>
+		</thead>
+		<tbody data-id="log_contents"><?php
+	foreach($settings['log_contents'] as $o) {
+		echo '<tr>';
+		display_string('log_contents', $o);
+		echo '</tr>';
+	}
+?>
+		</tbody>
+	</table>
+</div>
+
+
+
 
 
 <!-- Automatic stuff -->
@@ -266,6 +291,17 @@ function display_settings($link, $settings, $autoclaves, $models, $languages) {
 		<?=array_to_dropdown($settings['log_refresh_options'], 'log_refresh_option', $settings['log_refresh'], "save_setting('log_refresh', $(this).val()); startRefreshTable($(this).val());")?></th>
 </div>
 -->
+
+<!-- PWA -->
+<div class="setting settings_pwa">
+	<h3><?=lang('Install to device')?></h3>
+	<div class="settings_help"><?=lang($settings['help_pwa'])?></div>
+	<?=$settings['help_pwa_instructions']?>
+</div>
+<script language="javascript">
+	if (isPwaStandalone())
+		$('.settings_pwa').hide();
+</script>
 
 <!-- Account -->
 <div class="setting settings_account">
@@ -329,9 +365,17 @@ function display_settings($link, $settings, $autoclaves, $models, $languages) {
 <!-- Script -->
 	<script>
 	$( function() {
-		$('.operators tbody').sortable({ handle: '.handle' });
+		// string options
+		$('.strings tbody').sortable({
+			handle: '.handle',
+			update: function( ) {
+				$(this).find('input:first').change();
+			}
+		});
+
+		// autoclaves
 		$('.autoclaves tbody').sortable({
-		handle: '.handle',
+			handle: '.handle',
 			tolerance: 'pointer',
 			update: function( ) {
 				save_autoclaves_order(this);
@@ -688,7 +732,7 @@ function display_autoclave($a=null, $models, $edit=false) {
 	echo '<optgroup class="custom" label="'.lang('Custom').'">';
 	if(!$found && !$edit && strlen($a['model']))
 		echo '<option value="'.$a['model'].'" selected="selected">'.$a['model'].'</option>';
-	echo '<option value="enter_other">'.lang("Enter other").'</option>';
+	echo '<option data-id="other">'.lang("_ _ _ _ _ _").'</option>';
 	echo '</optgroup>';
 ?>
 			</select>
@@ -1002,6 +1046,7 @@ function load_settings($link, $settings) {
 		'operators',
 		'statuses',
 		'log_verification',
+		'log_contents',
 	);
 
 	$id=isset($_SESSION['id'])?$_SESSION['id']:false;
@@ -1208,15 +1253,21 @@ function refresh_interval($settings) {
 
 function download_link($settings) {
 	echo '<div class="download_link">';
-	echo array_to_dropdown(array_merge(array(lang('Download')),$settings['download_file_formats']), 'download_link', lang('Download'), "download_logs(this);", $blank_first_option=false);
+	echo array_to_dropdown(array_merge(array(lang('Backup')),$settings['download_file_formats']), 'download_link', lang('Backup'), "download_logs(this);", $blank_first_option=false);
 	echo '</div>';
 }
 
-function array_to_dropdown($array, $id, $val=null, $onchange=null, $blank_first_option=true) {
+function array_to_dropdown($array, $id, $val=null, $onchange=null, $blank_first_option=true, $allow_other=false) {
+	if($allow_other)
+		$onchange.=" dropdown_other(this);";
+
 	$html='<select '.($onchange==null?'':'onchange="'.$onchange.'"').'data-name="'.$id.'" name="'.$id.'">';
 
 	if($blank_first_option)
 		$html.='<option></option>';
+
+	if($allow_other)
+		$html.='<optgroup label="'.lang('Select').'">';
 
 	$found=$found_this=false;
 	$count=0;
@@ -1243,13 +1294,21 @@ function array_to_dropdown($array, $id, $val=null, $onchange=null, $blank_first_
 		$count++;
 	}
 
-	// not in list
-	if($val!==null && $val!=="" && !$found) {
-		$html.='<optgroup class="custom" label="'.lang('Removed').'">';
-		$html.='<option value="'.$val.'" selected="selected">'.$val.'</option>';
+	if($allow_other)
+		$html.='</optgroup>';
+
+	// allow other or not in list
+	if($allow_other || ($val!==null && $val!=="" && !$found)) {
+		$html.='<optgroup class="custom" label="'.lang('Other').'">';
+
+		if(strlen($val))
+			$html.='<option value="'.$val.'" selected="selected">'.$val.'</option>';
+
+		if($allow_other)
+			$html.='<option value="" data-id="other">'.lang('_ _ _ _ _ _').'</option>';
+
 		$html.='</optgroup>';
 	}
-
 
 	$html.='</select>';
 
@@ -1463,18 +1522,19 @@ function display_log($link, $log, $autoclaves=array(), $settings) {
 	echo '<td class="edit" onclick="edit_log(this);">'.icon('edit').'</td>';
 
 	echo '<td class="time">';
-	$date = new DateTimeImmutable($log['datetime']);
 	echo '<a target="_BLANK" href="/?log_download&id='.$log['id'].'">';
 	echo '<time class="time">';
+	$date = new DateTimeImmutable($log['datetime']);
 	echo $date->format('Y-m-d H:i');
+	echo '</time>';
 	echo '<span>';
 	echo icon('print', null /*text*/, true /*just text*/);
 	echo '</span>';
-	echo '</time>';
 	echo '</a>';
 	echo '<time class="timeago" data-time="'.$date->format('Y-m-d H:i').'"></time>';
 ?>
 	<script language="javascript">
+	timelocalformat($('.logs tr[data-id="<?=$log['id']?>"] time.time'));
 	timeago($('.logs tr[data-id="<?=$log['id']?>"] .timeago'));
 	</script>
 <?php
@@ -1532,22 +1592,37 @@ function display_log($link, $log, $autoclaves=array(), $settings) {
 	else
 		echo '-';
 
-	if(strlen($log['reason']))
-		echo '<span class="reason">'.$log['reason'].'</span>';
+	if(strlen($log['status_note']))
+		echo '<span class="status_note">'.$log['status_note'].'</span>';
 	echo '</td>';
 
 	echo '<td class="contents">';
-	echo $log['contents'];
+	echo '<div>'.nl2br($log['contents'].'</div>');
 	if($log['verification'])
 		echo '<span class="verification">'.$log['verification'].'</span>';
 	echo '</td>';
 
 	echo '<td class="photos">';
-	display_log_photos($log['photo_id'], '<b>'.$log['autoclave'].'</b>'.($log['cycle_no']?' ('.lang("Cycle")." #".$log['cycle_no'].')':''));
+		display_log_photos($log['photo_id'], $log, $autoclaves, $edit=true);
 	echo '</td>';
 }
 
-function display_log_photos($photo_id, $text='', $edit=false) {
+function display_log_photos($photo_id, $log, $autoclaves, $edit=false) {
+
+	// craft header
+	$header='';
+	if($log['autoclave']) {
+		$header.='<b>';
+		if(isset($autoclaves[$log['autoclave']]['nickname']))
+			$header.=$autoclaves[$log['autoclave']]['nickname'];
+		else
+			$header.=lang('Removed');
+		$header.='</b> ';
+	}
+	if($log['cycle_no'])
+		$header.='('.lang('Cycle')."# ".$log['cycle_no'].') ';
+	$header=trim($header);
+
 	// get files (reversed order)
 	$files = glob('photos/'.$photo_id.'/thumbs/*.{jpg,jpeg,png,gif}', GLOB_BRACE);
 	$files = array_reverse($files);
@@ -1561,7 +1636,7 @@ function display_log_photos($photo_id, $text='', $edit=false) {
 			$full=str_replace('/thumbs','', $file);
 
 			echo '<div class="logs_image" data-id="'.$file_id.'">';
-			echo '<img onclick="show_image(\''.$full.'\', \''.$text.'\', this);" src="'.$file.'" />';
+			echo '<img onclick="show_image(\''.$full.'\', \''.$header.'\', this);" src="'.$file.'" />';
 			if($edit)
 				confirm_delete('remove_logs_image(this);');
 
@@ -1752,7 +1827,7 @@ function edit_log($link, $id, $autoclaves=array(), $settings) {
 
 		// custom cycles
 		echo '<optgroup class="custom" label="'.lang('Custom').'">';
-		echo '<option value="enter_other">'.lang("Enter other").'</option>';
+		echo '<option data-id="other">'.lang("_ _ _ _ _ _").'</option>';
 		if(!$found && strlen($log['cycle_name']))
 			echo '<option data-name="'.$log['cycle_name'].'" selected="selected">'.$log['cycle_name'].'</option>';
 		echo '</optgroup>';
@@ -1770,23 +1845,39 @@ function edit_log($link, $id, $autoclaves=array(), $settings) {
 	</td>
 <?php
 	if(count($settings['operators'])) {
-		echo '<td>';
-		echo array_to_dropdown($settings['operators'], 'operator', $log['operator'], "save_log(this);");
+		echo '<td class="operator">';
+		echo array_to_dropdown($settings['operators'], 'operator', $log['operator'], "save_log(this);", true /*blank first */, true /*allow other*/);
+
+		// remember me
+		$checked=isset($_SESSION['rememberme']) && $_SESSION['rememberme']==$log['operator'];
+
+		echo '<input type="checkbox" onchange="rememberme(this);"'.($checked?' checked':''). '/><label>'.lang('Remember me').'</label>';
 		echo '</td>';
 	}
 ?>
 	<td>
 		<?=array_to_dropdown($settings['statuses'], 'status', $log['status'], "save_log(this);")?>
-		<label><?=lang("Note")?></label>	<!-- Reason -->
-		<input class="reason" onchange="save_log(this);" data-name="reason" value="<?=$log['reason']?>">
+		<label><?=lang("Note")?></label>
+		<input class="status_note" onchange="save_log(this);" data-name="status_note" value="<?=$log['status_note']?>">
 
 	</td>
 	<td class="contents">
-		<input onchange="save_log(this);" data-name="contents" value="<?=$log['contents']?>">
+		<div>
+			<label><?=lang('Contents')?></label>
+<?php
+		if(count($settings['log_contents']))
+			echo array_to_dropdown($settings['log_contents'],'contents', '' /*value */, "log_content(this);", true /*blank first*/, false /*allow other*/);
+
+		echo '<textarea onchange="save_log(this);" data-name="contents" rows="4" cols="50">'.$log['contents'].'</textarea>';
+
+?>
+		<div>
 <?php
 	if(count($settings['log_verification'])) {
-		echo '<label>'.lang('Verify').'</label>';
+		echo '<div>';
+		echo '<label>'.lang('Verification').'</label>';
 		echo array_to_dropdown($settings['log_verification'], 'verification', $log['verification'], "save_log(this);");
+		echo '</div>';
 	}
 
 ?>
@@ -1794,10 +1885,13 @@ function edit_log($link, $id, $autoclaves=array(), $settings) {
 	<td class="photos">
 		<div class="add" onclick="save_log_add_photo(this);"><?=icon('add')?></div>
 <?php
-	display_log_photos($log['photo_id'], '<b>'.$log['autoclave'].'</b>'.($log['cycle_no']?' ('.lang("Cycle")." #".$log['cycle_no'].')':''), $edit=true);
+		display_log_photos($log['photo_id'], $log, $autoclaves, $edit=true);
 ?>
 	</td>
 <?php
+}
+
+function rememberme($operator) {
 }
 
 function add_log($link, $settings, $time=null, $autoclaves=array()) {
@@ -1806,6 +1900,10 @@ function add_log($link, $settings, $time=null, $autoclaves=array()) {
 	// get last log
 	if(!count($autoclaves))
 		$add_log=automatic_latest_log($link, $settings);
+
+	// remember me
+	if(isset($_SESSION['rememberme']) && strlen($_SESSION['rememberme']))
+		$add_log['operator']=$_SESSION['rememberme'];
 
 	// insert new log
 	$q="INSERT into `logs` SET `owner` = '".mysqli_real_escape_string($link, $_SESSION['id'])."'"; //, `photo_id` = UUID_SHORT()";
@@ -1895,7 +1993,7 @@ function icon($name, $text=null, $only_icon=false) {
 	case 'donate': $icon="💸" ; break;
 	case 'random': $icon="🎲"; break;
 	case 'download': $icon="💾"; break;
-	case 'print': $icon='🖶'; break;
+	case 'print': $icon='⎙'; break;
 	default: $icon=$name; break;
 	}
 

@@ -12,7 +12,7 @@
 		<link rel="apple-touch-icon" sizes="180x180" href="claveomatic_180.png">
 		<link rel="shortcut_icon" type="image/png" sizes="32x32" href="claveomatic_32.png">
 		<link rel="icon" type="image/png" sizes="16x16" href="claveomatic_16.png">
-		<link rel="manifest" href="manifest.json">
+		<link rel="manifest" href="manifest.json?rand=2">
 
 		<link rel="stylesheet" href="styles.css?rand=<?=rand()?>">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.3.7/jquery.datetimepicker.min.css" />

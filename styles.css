@@ -1,9 +1,6 @@
 /* landscape screen */
-@media (orientation: landscape) {
-}
-
 /* small screen */
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 800px) {
 	.main {
 		margin-top: 3.25em !important;
 	}
@@ -388,6 +385,9 @@ input[type="submit"]:hover {
 table.logs .datetime {
 	width: 9em;
 }
+table.logs textarea {
+	margin-bottom: 1em;
+}
 table.logs .cycle select:disabled,
 table.logs .cycle input:disabled {
 	border: 1px solid #333;
@@ -396,19 +396,19 @@ table.logs li {
 	display: inline;
 }
 table.logs .verification,
-table.logs .reason,
+table.logs .status_note,
 table.logs .model {
 	padding-top: 0.2em;
 	display: block;
 }
-table.logs .reason,
+table.logs .status_note,
 table.logs .model,
 table.logs .verification,
 table.logs .cycle li,
 table.logs .removed {
 	color: #AAA;
 }
-table.logs .reason,
+table.logs .status_note,
 table.logs .model,
 table.logs .verification,
 table.logs .cycle li {
@@ -513,9 +513,9 @@ table.logs tbody input {
 	border-bottom: 2px solid #000;
 	border-right: 2px solid #000;
 }
-.table.auto td:first-child,
-.table.auto th:first-child {
-/*	border-top: 2px solid #000;*/
+.table.auto tr:first-child td,
+.table.auto tr:first-child th {
+	border-top: 2px solid #000;
 }
 .table.auto th,
 .table.auto td,
@@ -573,14 +573,21 @@ table.logs tbody input {
 .table label {
 	width: 3em;
 }
-.table input.reason,
+.table .contents input {
+	width: 12em;
+}
+.table .contents label {
+	width: 5em;
+}
+.table input.status_note,
 .table .cycle select,
 .table .cycle select,
 .table .cycle input,
 .table .contents select {
 	width: 8em;
 }
-.table.logs .editing .contents {
+.table.logs .contents div {
+	padding-left: 0.5em;
 	text-align: left;
 }
 .table .nickname {
@@ -818,7 +825,17 @@ img.log_image {
 	margin-left: 1.5em;
 }
 .setting li::marker {
-	color: #aaa;
+	color: #bf7759;
+}
+.settings_pwa b {
+	color: #bf7759;
+}
+.settings_pwa ul {
+	font-size: 0.8em;
+	list-style-type: none;
+}
+.settings_pwa > ul > li:not(:first-child) {
+	padding-top: 0.5em !important;
 }
 .settings_help {
 	font-size: 0.6em;
@@ -960,22 +977,24 @@ img.log_image {
 .autoclaves tr.editing .cycle {
 	padding-top: 0.25em;
 }
-/*.autoclaves tr:not(.editing) .cycle:first-child {
-	margin-top: 0;
-	border-top: none;
-}*/
 .autoclaves .cycle li {
 	white-space: nowrap;
 	margin-bottom: 0.25em;
 	display: block;
 }
-/*.autoclaves .cycle input {
-display: inline-block;
-}*/
 .autoclaves .add_autoclaves_cycles_blank {
 	display: none;
 }
-
+table.logs .editing .operator input {
+	width: 2em;
+	margin-top: 0.45em;	
+	float: left;
+	background: #222;
+}
+table.logs .editing .operator label {
+	white-space: nowrap;
+	color: #aaa;
+}
 .logs_image {
 	white-space: nowrap;
 }

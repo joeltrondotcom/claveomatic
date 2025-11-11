@@ -11,16 +11,11 @@ $nerd="
     ▄▌  ▙▌
 ";
 /* 
-
-// to do list
-
 // general
  - statim IP look up new cycles
  - help page for port forwarding statims
- - test all magic thingos
 
 // bugs
-- changing autoclave doesn't wipe/fix/update cycle info
 
 // known bugs (not going to fix)
  - Photo search returns true if all photos are deleted
@@ -84,6 +79,10 @@ if($logged_in) {
 	if(isset($_GET['add_autoclave_cycle']))
 		die(edit_autoclave_cycle());
 
+	// remember me
+	if(isset($_GET['rememberme']) && isset($_GET['operator']))
+		die($_SESSION['rememberme']=$_GET['operator']);
+
 	// cycle types
 	if(isset($_GET['cycle_names']))
 		die(json_encode($autoclaves[$_GET['cycle_names']]['cycles']));
@@ -93,9 +92,9 @@ if($logged_in) {
 		die(get_logs_count($link, (isset($_GET['search'])?$_GET['search']:array())));
 
 	// logs and logs count
-	if(isset($_GET['logs']) || isset($_GET['logs_count']))
+	if(isset($_GET['logs']) || isset($_GET['logs_count'])) {
 		die(json_logs_content($link, $settings, $autoclaves,(isset($_GET['pageNumber'])?$_GET['pageNumber']:null), (isset($_GET['pageSize'])?$_GET['pageSize']:null), (isset($_GET['search'])?$_GET['search']:array())));
-
+	}
 	// add log
 	if(isset($_GET['add_log'])) 
 		die(add_log($link, $settings, (isset($_GET['time'])?$_GET['time']:null),$autoclaves));
@@ -228,5 +227,4 @@ $ui['main']=ob_get_contents();
 ob_end_clean();
 
 include_once('ui.inc.php');
-
 ?>
